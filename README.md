@@ -2,6 +2,8 @@
 
 A premium RFID-based wallet system integrated with a high-end fashion e-commerce storefront. This project combines embedded hardware (ESP8266) with a modern web backend and frontend to provide a seamless payment experience using RFID cards.
 
+Live link: 157.173.101.159:9267/linoge
+
 ## 🌟 Features
 
 - **RFID Integration**: Detect and process RFID cards for secure transactions.
