@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LINOGE - Shop</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <header>
+        <nav>
+            <div class="logo">LINOGE</div>
+            <div class="nav-links">
+                <a href="#">MEN</a>
+                <a href="#">WOMEN</a>
+                <a href="#">LOOKBOOK</a>
+                <a href="#">ABOUT</a>
+            </div>
+            <div class="nav-icons">
+                <i class="fas fa-search"></i>
+                <div class="user-menu">
+                    <i class="fas fa-user" onclick="toggleMenu()"></i>
+                    <div id="userDropdown" class="dropdown-content">
+                        <a href="#" onclick="setRole('user')">Normal User</a>
+                        <a href="admin.html">Admin</a>
+                    </div>
+                </div>
+                <i class="fas fa-heart"></i>
+                <div id="cartIcon" onclick="window.location.href='checkout.html'" style="cursor: pointer;">
+                    <i class="fas fa-shopping-bag"></i>
+                    <span id="bagCount" class="bag-count">0</span>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="fade-in-up">
+        <div class="category-header fade-in" style="margin-bottom: 20px;">
+            <span
+                style="font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-secondary); font-weight: 700;">CATEGORY</span>
+            <h2
+                style="font-size: 24px; font-weight: 700; margin-top: 5px; text-transform: uppercase; letter-spacing: 0.05em;">
+                CLOTHES</h2>
+        </div>
+        <h1 class="page-title">Seasonal Collection</h1>
+        <div id="productGrid" class="product-grid">
+            <!-- Products will be loaded here -->
+            <div class="loading">Loading collection...</div>
+        </div>
+    </main>
+
+    <script>
+        const API_URL = 'http://localhost:9267';
+        let products = [];
+        let cart = JSON.parse(localStorage.getItem('cart')) || [];
+
+        // Curated Fashion Image Mapping (Strictly Clothes)
+        const imageMap = {
+            'Double-Breasted Cashmere Coat': 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&w=800&q=80',
+            'Silk Charmeuse Evening Gown': 'https://images.unsplash.com/photo-1515372039744-b8fb02c3bb92?auto=format&fit=crop&w=800&q=80',
+            'Hand-Burnished Leather Boots': 'https://images.unsplash.com/photo-1620606135400-98c95191c49d?auto=format&fit=crop&w=800&q=80',
+            'Structured Wool Blazer': 'https://images.unsplash.com/photo-1548883354-94bcfe321cbb?auto=format&fit=crop&w=800&q=80',
+            'Raw Selvedge Denim Jeans': 'https://images.unsplash.com/photo-1555529731-118a59834450?auto=format&fit=crop&w=800&q=80',
+            'Fine-Gauge Merino Sweater': 'https://images.unsplash.com/photo-1624223235413-a75fa2747eac?auto=format&fit=crop&w=800&q=80'
+        };
+
+        function toggleMenu() {
+            document.getElementById("userDropdown").classList.toggle("show");
+        }
+
+        window.onclick = function (event) {
+            if (!event.target.matches('.fa-user')) {
+                var dropdowns = document.getElementsByClassName("dropdown-content");
+                for (var i = 0; i < dropdowns.length; i++) {
+                    var openDropdown = dropdowns[i];
+                    if (openDropdown.classList.contains('show')) {
+                        openDropdown.classList.remove('show');
+                    }
+                }
+            }
+        }
+
+        function setRole(role) {
+            console.log("Role set to:", role);
+            toggleMenu();
+        }
+
+        async function loadProducts() {
+            try {
+                const response = await fetch(`${API_URL}/api/products`);
+                if (response.ok) {
+                    products = await response.json();
+                    renderProducts();
+                }
+            } catch (error) {
+                console.error('Error loading products:', error);
+                document.getElementById('productGrid').innerHTML = '<p>Error loading collection. Is the server running?</p>';
+            }
+        }
+
+        function renderProducts() {
+            const grid = document.getElementById('productGrid');
+            grid.innerHTML = products.map((product, index) => {
+                const imgSrc = imageMap[product.name] || `https://via.placeholder.com/600x800?text=${product.name}`;
+                return `
+                <div class="product-card fade-in-up" style="animation-delay: ${index * 0.1}s">
+                    <div class="product-image">
+                        <img src="${imgSrc}" alt="${product.name}">
+                    </div>
+                    <div class="product-info">
+                        <h3>${product.name}</h3>
+                        <p class="price">$${(product.price / 100).toLocaleString()}</p>
+                        <button class="btn-add" onclick="addToCart(${product.id})">ADD TO BAG</button>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        function addToCart(productId) {
+            const product = products.find(p => p.id === productId);
+            if (product) {
+                const existing = cart.find(item => item.id === productId);
+                if (existing) {
+                    existing.quantity += 1;
+                } else {
+                    cart.push({ ...product, quantity: 1 });
+                }
+                updateBagCount();
+                saveCart();
+
+                // Visual feedback
+                const btn = event.target;
+                const originalText = btn.innerText;
+                btn.innerText = 'ADDED!';
+                btn.style.background = '#4caf50';
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                    btn.style.background = '';
+                }, 1000);
+            }
+        }
+
+        function updateBagCount() {
+            const count = cart.reduce((sum, item) => sum + item.quantity, 0);
+            document.getElementById('bagCount').innerText = count;
+        }
+
+        function saveCart() {
+            localStorage.setItem('cart', JSON.stringify(cart));
+        }
+
+        // Initialize
+        loadProducts();
+        updateBagCount();
+    </script>
+</body>
+
+</html>

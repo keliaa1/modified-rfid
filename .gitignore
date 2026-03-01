@@ -1,0 +1,11 @@
+node_modules/
+.env
+database/*.db
+backend/node_modules/
+backend/.env
+backend/database/*.db
+dist/
+build/
+.vscode/
+.idea/
+*.log

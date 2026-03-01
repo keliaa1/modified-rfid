@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LINOGE - Console</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <header>
+        <nav>
+            <div class="logo" onclick="window.location.href='cashier.html'" style="cursor: pointer;">LINOGE</div>
+            <div class="nav-links">
+                <a href="cashier.html">STOREFRONT</a>
+                <a href="#">ANALYTICS</a>
+                <a href="#">OPERATIONS</a>
+            </div>
+            <div class="nav-icons">
+                <i class="fas fa-search"></i>
+                <div class="user-menu">
+                    <i class="fas fa-user-shield" onclick="toggleMenu()"></i>
+                    <div id="userDropdown" class="dropdown-content">
+                        <a href="cashier.html">Return to Store</a>
+                        <a href="#">Privilege Settings</a>
+                    </div>
+                </div>
+                <div class="status-indicator">
+                    <div id="statusDot" class="dot dot-offline"></div>
+                    <span id="statusText">System Offline</span>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="fade-in">
+        <h1 class="page-title">Management Console</h1>
+
+        <div class="dashboard-grid">
+            <!-- Terminal Status -->
+            <div class="stat-card fade-in-up" style="animation-delay: 0.1s">
+                <h3>Terminal Protocol</h3>
+                <div id="cardStatus" style="font-size: 18px; font-weight: 600; color: var(--text);">Standby Mode</div>
+                <div style="margin-top: 10px; font-size: 12px; color: var(--text-secondary);">Waiting for Privilege Card
+                    authentication...</div>
+            </div>
+
+            <!-- Card UID -->
+            <div class="stat-card fade-in-up" style="animation-delay: 0.2s">
+                <h3>Authorized UID</h3>
+                <div id="cardUid" class="value" style="font-size: 28px;">-</div>
+                <div
+                    style="margin-top: 10px; font-size: 11px; color: var(--accent); font-weight: 700; letter-spacing: 0.05em;">
+                    SECURE RFID CONNECTION</div>
+            </div>
+
+            <!-- Balance -->
+            <div class="stat-card fade-in-up" style="animation-delay: 0.3s">
+                <h3>Account Credit</h3>
+                <div id="currentBalance" class="value">$0.00</div>
+                <div id="lastUpdated"
+                    style="margin-top: 10px; font-size: 11px; color: var(--text-secondary); text-transform: uppercase;">
+                    Sync: Standing By</div>
+            </div>
+
+            <!-- Top Up Form -->
+            <div class="stat-card fade-in-up" style="grid-row: span 2; animation-delay: 0.4s">
+                <h3>Credit Allocation</h3>
+                <div class="topup-presets">
+                    <button class="btn-preset" onclick="setTopup(5000)">$50</button>
+                    <button class="btn-preset" onclick="setTopup(10000)">$100</button>
+                    <button class="btn-preset" onclick="setTopup(25000)">$250</button>
+                </div>
+                <div class="form-group">
+                    <label>Allocation Amount (Cents)</label>
+                    <input type="number" id="topupAmount" value="5000" min="1">
+                </div>
+                <button id="topupButton" class="btn-checkout" onclick="topUp()" disabled
+                    style="margin-top: 20px; opacity: 0.5;">AUTHORIZE TOP-UP</button>
+                <p id="topupHint"
+                    style="color: var(--text-secondary); font-size: 11px; margin-top: 20px; text-align: center; font-weight: 600; letter-spacing: 0.05em;">
+                    SCAN CARD TO ENABLE AUTHORIZATION</p>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="stat-card fade-in-up" style="grid-column: span 2; animation-delay: 0.5s">
+                <h3>Privilege Ledger</h3>
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Operation</th>
+                            <th>Amount</th>
+                            <th>Updated Pool</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactionList">
+                        <tr>
+                            <td colspan="4"
+                                style="text-align: center; color: var(--text-secondary); padding: 50px; font-size: 13px;">
+                                Waiting for authorized card scan to retrieve activity...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="notificationArea" class="rfid-modal">
+            <div class="rfid-content">
+                <h2 id="notifTitle" style="letter-spacing: 0.1em;">PROCESSING</h2>
+                <p id="notifMessage" style="margin-top: 15px; font-size: 14px; color: var(--text-secondary);">
+                    Authorization in progress...</p>
+                <button class="btn-add" style="margin-top: 40px; font-size: 10px; padding: 12px 30px;"
+                    onclick="closeNotif()">CLOSE CONSOLE</button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const API_URL = 'http://localhost:9267';
+        let ws = null;
+        let currentUID = null;
+
+        function toggleMenu() {
+            document.getElementById("userDropdown").classList.toggle("show");
+        }
+
+        function setTopup(val) {
+            document.getElementById('topupAmount').value = val;
+        }
+
+        function closeNotif() {
+            document.getElementById('notificationArea').style.display = 'none';
+        }
+
+        function showNotif(title, message) {
+            const area = document.getElementById('notificationArea');
+            document.getElementById('notifTitle').innerText = title.toUpperCase();
+            document.getElementById('notifMessage').innerText = message;
+            area.style.display = 'flex';
+        }
+
+        function connectWebSocket() {
+            ws = new WebSocket('ws://localhost:9267');
+            ws.onopen = () => {
+                document.getElementById('statusDot').className = 'dot dot-online';
+                document.getElementById('statusText').innerText = 'System Live';
+            };
+            ws.onclose = () => {
+                document.getElementById('statusDot').className = 'dot dot-offline';
+                document.getElementById('statusText').innerText = 'System Offline';
+                setTimeout(connectWebSocket, 3000);
+            };
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.type === 'CARD_DETECTED' || data.type === 'BALANCE_UPDATE') {
+                    handleCardDetected(data.data);
+                }
+                if (data.type === 'TOPUP_COMPLETED') {
+                    showNotif('Top-Up Confirmed', `Successfully allocated $${(data.data.amount / 100).toLocaleString()} to card ${data.data.uid}`);
+                    if (currentUID === data.data.uid) loadTransactions(currentUID);
+                }
+                if (data.type === 'PAYMENT_COMPLETED') {
+                    if (currentUID === data.data.uid) {
+                        loadTransactions(currentUID);
+                        handleCardDetected({ uid: currentUID, balance: data.data.newBalance });
+                    }
+                }
+            };
+        }
+
+        function handleCardDetected(data) {
+            const { uid, balance } = data;
+            currentUID = uid;
+            document.getElementById('cardUid').innerText = uid;
+            document.getElementById('currentBalance').innerText = `$${(balance / 100).toLocaleString()}`;
+            document.getElementById('lastUpdated').innerText = `Sync: ${new Date().toLocaleTimeString()}`;
+            document.getElementById('cardStatus').innerText = 'Card Authenticated';
+            document.getElementById('cardStatus').style.color = 'var(--accent)';
+
+            const btn = document.getElementById('topupButton');
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            document.getElementById('topupHint').style.opacity = '0.5';
+
+            loadTransactions(uid);
+        }
+
+        async function loadTransactions(uid) {
+            try {
+                const response = await fetch(`${API_URL}/api/transactions/${uid}`);
+                if (response.ok) {
+                    const transactions = await response.json();
+                    const tbody = document.getElementById('transactionList');
+                    if (transactions.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 40px;">No recent transactions for this card.</td></tr>';
+                        return;
+                    }
+                    tbody.innerHTML = transactions.map((t, index) => `
+                        <tr class="fade-in" style="animation-delay: ${index * 0.05}s">
+                            <td>${new Date(t.timestamp).toLocaleTimeString()}</td>
+                            <td style="font-weight: 700; font-size: 12px; letter-spacing: 0.02em;">${t.type.toUpperCase()}</td>
+                            <td>$${(t.amount / 100).toLocaleString()}</td>
+                            <td style="color: var(--accent); font-weight: 700;">$${(t.new_balance / 100).toLocaleString()}</td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (error) { console.error(error); }
+        }
+
+        async function topUp() {
+            if (!currentUID) return;
+            const amount = parseInt(document.getElementById('topupAmount').value);
+            showNotif('Authorizing', 'Waiting for Privilege Card confirmation...');
+            try {
+                const response = await fetch(`${API_URL}/topup`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ uid: currentUID, amount: amount })
+                });
+                if (!response.ok) {
+                    const err = await response.json();
+                    showNotif('Authorization Denied', err.error || 'The system could not authorize this request.');
+                }
+            } catch (error) {
+                showNotif('System Error', 'Network failure during authorization.');
+            }
+        }
+
+        // Initialize
+        connectWebSocket();
+
+        // Close dropdown when clicking outside
+        window.onclick = function (event) {
+            if (!event.target.matches('.fa-user-shield')) {
+                var dropdowns = document.getElementsByClassName("dropdown-content");
+                for (var i = 0; i < dropdowns.length; i++) {
+                    var openDropdown = dropdowns[i];
+                    if (openDropdown.classList.contains('show')) {
+                        openDropdown.classList.remove('show');
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>

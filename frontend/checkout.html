@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LINOGE - Checkout</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <header>
+        <nav>
+            <div class="logo" onclick="window.location.href='cashier.html'" style="cursor: pointer;">LINOGE</div>
+            <div class="nav-links">
+                <a href="cashier.html">SHOP</a>
+                <a href="#">LOOKBOOK</a>
+                <a href="#">ABOUT</a>
+            </div>
+            <div class="nav-icons">
+                <i class="fas fa-search"></i>
+                <div class="user-menu">
+                    <i class="fas fa-user" onclick="toggleMenu()"></i>
+                    <div id="userDropdown" class="dropdown-content">
+                        <a href="#" onclick="window.location.href='cashier.html'">Normal User</a>
+                        <a href="admin.html">Admin</a>
+                    </div>
+                </div>
+                <i class="fas fa-shopping-bag"></i>
+                <span id="bagCount" class="bag-count">0</span>
+            </div>
+        </nav>
+    </header>
+
+    <script>
+        function toggleMenu() {
+            document.getElementById("userDropdown").classList.toggle("show");
+        }
+
+        window.onclick = function (event) {
+            if (!event.target.matches('.fa-user')) {
+                var dropdowns = document.getElementsByClassName("dropdown-content");
+                for (var i = 0; i < dropdowns.length; i++) {
+                    var openDropdown = dropdowns[i];
+                    if (openDropdown.classList.contains('show')) {
+                        openDropdown.classList.remove('show');
+                    }
+                }
+            }
+        }
+    </script>
+
+    <main class="fade-in">
+        <h1 class="page-title">Summary</h1>
+
+        <div class="checkout-container fade-in-up">
+            <!-- Left Side: Forms -->
+            <div class="checkout-forms">
+                <div class="checkout-section">
+                    <h2>Information</h2>
+                    <p style="font-size: 14px; margin-bottom: 20px;">Already have an account? <a href="#"
+                            style="color: var(--text);">Log in</a></p>
+
+                    <h3>Contact Details</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>First name</label>
+                            <input type="text" placeholder="Fashion">
+                        </div>
+                        <div class="form-group">
+                            <label>Last name</label>
+                            <input type="text" placeholder="Enthusiast">
+                        </div>
+                        <div class="form-group">
+                            <label>Phone number</label>
+                            <input type="text" placeholder="+1 234 567 890">
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" placeholder="client@linoge.com">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="checkout-section">
+                    <h3>Shipping Logistics</h3>
+                    <div class="form-grid">
+                        <div class="form-group full">
+                            <label>Country / Region</label>
+                            <select>
+                                <option>United States</option>
+                                <option>United Kingdom</option>
+                                <option>France</option>
+                                <option>Japan</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>City</label>
+                            <input type="text" placeholder="Paris">
+                        </div>
+                        <div class="form-group">
+                            <label>Address</label>
+                            <input type="text" placeholder="Avenue Montaigne">
+                        </div>
+                        <div class="form-group full">
+                            <label>Zip / Postal code</label>
+                            <input type="text" placeholder="75008">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="checkout-section">
+                    <h3>Secure Payment</h3>
+                    <div class="form-group"
+                        style="padding: 24px; border: 1px solid var(--primary); border-radius: var(--radius); display: flex; flex-direction: row; align-items: center; gap: 15px; background: #fafafa;">
+                        <input type="radio" checked style="width: 20px; height: 20px; filter: grayscale(1);">
+                        <label style="color: var(--text); padding: 0; margin: 0; font-weight: 600;">LINOGE PRIVILEGE
+                            CARD</label>
+                        <i class="fas fa-id-card" style="margin-left: auto; font-size: 24px;"></i>
+                    </div>
+                </div>
+
+                <button class="btn-checkout" id="placeOrderBtn" onclick="openRFIDModal()">CONFIRM & PLACE ORDER</button>
+            </div>
+
+            <!-- Right Side: Bag Summary -->
+            <div class="shopping-bag" id="bagSummary">
+                <h2>SELECTED ITEMS (0)</h2>
+                <div id="bagItems">
+                    <!-- Items will load with slide-in animation -->
+                </div>
+
+                <div class="totals">
+                    <div class="total-row">
+                        <span>ESTIMATED SHIPPING</span>
+                        <span id="shippingPrice">COMPLIMENTARY</span>
+                    </div>
+                    <div class="total-row grand-total">
+                        <span>TOTAL</span>
+                        <span id="totalAmount">$0.00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- RFID Scanning Modal -->
+    <div id="rfidModal" class="rfid-modal">
+        <div class="rfid-content">
+            <div class="rfid-animation">
+                <i class="fas fa-id-card fa-2x"></i>
+            </div>
+            <h2>AUTHORIZING PAYMENT</h2>
+            <p id="rfidStatus"
+                style="color: var(--text-secondary); margin-top: 15px; font-size: 14px; letter-spacing: 0.02em;">PLEASE
+                SCAN YOUR PRIVILEGE CARD TO FINALIZE THE TRANSACTION.</p>
+            <div id="paymentResult"
+                style="display: none; margin-top: 25px; padding: 20px; border-radius: 8px; font-weight: 600; font-size: 14px;">
+            </div>
+            <button id="cancelBtn" class="btn-add"
+                style="margin-top: 30px; background: #f5f5f7; color: var(--text); padding: 12px 30px; font-size: 11px;"
+                onclick="closeRFIDModal()">CANCEL TRANSACTION</button>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:9267';
+        let cart = JSON.parse(localStorage.getItem('cart')) || [];
+        let ws = null;
+        let isProcessing = false;
+
+        // Curated Fashion Image Mapping (Shared with cashier)
+        const imageMap = {
+            'Double-Breasted Cashmere Coat': 'https://images.unsplash.com/photo-1539533113208-f6df8cc8b543?auto=format&fit=crop&w=400&q=80',
+            'Silk Charmeuse Evening Gown': 'https://images.unsplash.com/photo-1566174053879-31528523f8ae?auto=format&fit=crop&w=400&q=80',
+            'Hand-Burnished Leather Boots': 'https://images.unsplash.com/photo-1638247025967-b4e38f787b76?auto=format&fit=crop&w=400&q=80',
+            'Structured Wool Blazer': 'https://images.unsplash.com/photo-1594932224010-75660ee75ecf?auto=format&fit=crop&w=400&q=80',
+            'Raw Selvedge Denim Jeans': 'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=400&q=80',
+            'Fine-Gauge Merino Sweater': 'https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?auto=format&fit=crop&w=400&q=80'
+        };
+
+        function renderBag() {
+            const itemsContainer = document.getElementById('bagItems');
+            const totalAmountEl = document.getElementById('totalAmount');
+            const bagCountEl = document.getElementById('bagCount');
+            const bagSummaryTitle = document.querySelector('.shopping-bag h2');
+
+            if (cart.length === 0) {
+                itemsContainer.innerHTML = '<p style="color: var(--text-secondary); font-size: 13px; font-style: italic;">Your selection is currently empty.</p>';
+                totalAmountEl.innerText = '$0.00';
+                bagCountEl.innerText = '0';
+                bagSummaryTitle.innerText = 'SELECTED ITEMS (0)';
+                document.getElementById('placeOrderBtn').disabled = true;
+                document.getElementById('placeOrderBtn').style.opacity = '0.5';
+                return;
+            }
+
+            let total = 0;
+            let count = 0;
+
+            itemsContainer.innerHTML = cart.map((item, index) => {
+                total += (item.price * item.quantity);
+                count += item.quantity;
+                const imgSrc = imageMap[item.name] || `https://via.placeholder.com/200x300?text=${item.name}`;
+                return `
+                    <div class="bag-item" style="animation-delay: ${index * 0.1}s">
+                        <img src="${imgSrc}" alt="${item.name}">
+                        <div class="bag-item-info">
+                            <h4>${item.name}</h4>
+                            <p>QTY: ${item.quantity}</p>
+                            <p style="font-weight: 700; color: var(--text); margin-top: 8px;">$${((item.price * item.quantity) / 100).toLocaleString()}</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            totalAmountEl.innerText = `$${(total / 100).toLocaleString()}`;
+            bagCountEl.innerText = count;
+            bagSummaryTitle.innerText = `SELECTED ITEMS (${count})`;
+        }
+
+        function openRFIDModal() {
+            document.getElementById('rfidModal').style.display = 'flex';
+            document.getElementById('paymentResult').style.display = 'none';
+            document.getElementById('rfidStatus').innerText = 'PLEASE SCAN YOUR PRIVILEGE CARD TO FINALIZE THE TRANSACTION.';
+            connectWebSocket();
+        }
+
+        function closeRFIDModal() {
+            document.getElementById('rfidModal').style.display = 'none';
+            if (ws) ws.close();
+        }
+
+        function connectWebSocket() {
+            ws = new WebSocket('ws://localhost:9267');
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.type === 'CARD_DETECTED' && !isProcessing) {
+                    processCheckout(data.data.uid);
+                }
+                if (data.type === 'ERROR') {
+                    showResult('error', data.data.message);
+                }
+            };
+        }
+
+        async function processCheckout(uid) {
+            isProcessing = true;
+            document.getElementById('rfidStatus').innerText = 'DEDUCTING FUNDS FROM PRIVILEGE ACCOUNT...';
+            document.getElementById('cancelBtn').style.display = 'none';
+
+            let successCount = 0;
+            let errors = [];
+
+            for (const item of cart) {
+                try {
+                    const response = await fetch(`${API_URL}/pay`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            uid: uid,
+                            productId: item.id,
+                            quantity: item.quantity
+                        })
+                    });
+                    const result = await response.json();
+                    if (response.ok) {
+                        successCount++;
+                    } else {
+                        errors.push(`${item.name}: ${result.error}`);
+                    }
+                } catch (e) {
+                    errors.push(`${item.name}: Connection failure`);
+                }
+            }
+
+            if (successCount === cart.length) {
+                showResult('success', 'TRANSACTION SUCCESSFUL. THANK YOU FOR YOUR PURCHASE.');
+                cart = [];
+                localStorage.setItem('cart', JSON.stringify(cart));
+                setTimeout(() => window.location.href = 'cashier.html', 3500);
+            } else if (successCount > 0) {
+                showResult('info', `PARTIAL PROCESSING. NOTED ERRORS: ${errors.join(', ')}`);
+                document.getElementById('cancelBtn').style.display = 'block';
+                isProcessing = false;
+            } else {
+                showResult('error', `TRANSACTION DECLINED: ${errors.join(', ')}`);
+                document.getElementById('cancelBtn').style.display = 'block';
+                isProcessing = false;
+            }
+        }
+
+        function showResult(type, message) {
+            const resultDiv = document.getElementById('paymentResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerText = message;
+
+            if (type === 'success') {
+                resultDiv.style.background = '#f0f8f0';
+                resultDiv.style.color = '#1e5e1e';
+                resultDiv.style.border = '1px solid #4caf50';
+                document.querySelector('.rfid-animation').style.borderColor = '#4caf50';
+            } else if (type === 'error') {
+                resultDiv.style.background = '#fff5f5';
+                resultDiv.style.color = '#b71c1c';
+                resultDiv.style.border = '1px solid #f44336';
+                document.querySelector('.rfid-animation').style.borderColor = '#f44336';
+            } else {
+                resultDiv.style.background = '#f0f4f8';
+                resultDiv.style.color = '#0d47a1';
+                resultDiv.style.border = '1px solid #0066cc';
+            }
+        }
+
+        // Initialize
+        renderBag();
+    </script>
+</body>
+
+</html>
